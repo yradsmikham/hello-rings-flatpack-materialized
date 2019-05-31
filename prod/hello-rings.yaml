@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: hello-ring
-          image: "hellorings.azurecr.io/hellorings:master-3698"
+          image: "hellorings.azurecr.io/hellorings:featureA-3702"
           imagePullPolicy: IfNotPresent
 
 ---
