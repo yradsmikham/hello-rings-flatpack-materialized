@@ -154,7 +154,7 @@ spec:
       containers:
         - name: ring-operator
           # Replace this with the built image name
-          image: migolfi.azurecr.io/ring-operator:v0.0.1-v1alpha1
+          image: migolfi.azurecr.io/ring-operator:v0.0.2-v1alpha1
           command:
           - ring-operator
           imagePullPolicy: Always
