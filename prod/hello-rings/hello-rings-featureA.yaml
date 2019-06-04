@@ -3,7 +3,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: hello-rings-featureA
+  name: hello-rings-featurea
   labels:
     app.kubernetes.io/name: hello-ring
 spec:
