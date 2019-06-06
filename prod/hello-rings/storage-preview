@@ -1,0 +1,52 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: storage-preview
+spec:
+  selector:
+    matchLabels:
+      name: storage
+      version: v1
+      ring: preview
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: storage
+        version: v1
+        ring: preview
+    spec:
+      containers:
+      - name: storage
+        image: migolfi.azurecr.io/ringfollower
+        ports:
+        - containerPort: 8080
+        env:
+          - name: RING
+            value: preview
+      imagePullSecrets:
+        - name: azurecr
+---
+apiVersion: rings.microsoft.com/v1alpha1
+kind: Ring
+metadata:
+  name: storage-v1-preview
+spec:
+  # Deploy to environment
+  deploy: true
+  # Custom Claims
+  claim: preview
+  entryPoints:
+    # Source of traffic (eg: 80 or 443)
+    - http
+    - https
+    - internal
+  match: PathPrefix(`/storage/v1`) && Headers(`x-ring`, `preview`)
+  selector:
+  # Target deployment instances
+    # name of microservice
+    name: storage
+    # Major version of microservice
+    version: v1
+    # Branch name
+    ring: preview
