@@ -34,8 +34,9 @@ spec:
   claim: featurea
   entryPoints:
     # Source of traffic (eg: 80 or 443)
-    - web
-    - web-secured
+    - http
+    - https
+    - internal
   match: PathPrefix(`/query/v1`) && Headers(`x-ring`, `featurea`)
   selector:
     app.kubernetes.io/name: hello-rings-featurea
