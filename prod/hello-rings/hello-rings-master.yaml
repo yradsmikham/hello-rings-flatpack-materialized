@@ -23,7 +23,7 @@ spec:
 
 ---
 # Source: hello-ring/templates/ring.yaml
-apiVersion: ring.microsoft.com/v1alpha1
+apiVersion: rings.microsoft.com/v1alpha1
 kind: Ring
 metadata:
   name: master
