@@ -38,4 +38,4 @@ spec:
     - web-secured
   match: PathPrefix(`/query/v1`) && Headers(`x-ring`, `production`)
   selector:
-    ring: app.kubernetes.io/name: hello-ring-master
+    app.kubernetes.io/name: hello-ring-master
