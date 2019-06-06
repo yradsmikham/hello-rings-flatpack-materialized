@@ -38,4 +38,5 @@ spec:
     - web-secured
   match: PathPrefix(`/query/v1`) && Headers(`x-ring`, `featureA`)
   selector:
-    ring: app.kubernetes.io/name: hello-ring-featurea
+    ring: 
+      app.kubernetes.io/name: hello-ring-featurea
