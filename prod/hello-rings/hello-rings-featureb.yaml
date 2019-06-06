@@ -34,8 +34,9 @@ spec:
   claim: featureb
   entryPoints:
     # Source of traffic (eg: 80 or 443)
-    - web
-    - web-secured
+    - http
+    - https
+    - internal
   match: PathPrefix(`/query/v1`) && Headers(`x-ring`, `featureb`)
   selector:
     app.kubernetes.io/name: hello-rings-featureb
