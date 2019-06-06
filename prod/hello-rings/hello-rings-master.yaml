@@ -5,16 +5,16 @@ kind: Deployment
 metadata:
   name: hello-rings-master
   labels:
-    app.kubernetes.io/name: hello-ring
+    app.kubernetes.io/name: hello-ring-master
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: hello-ring
+      app.kubernetes.io/name: hello-ring-master
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: hello-ring
+        app.kubernetes.io/name: hello-ring-master
     spec:
       containers:
         - name: hello-ring
@@ -38,10 +38,4 @@ spec:
     - web-secured
   match: PathPrefix(`/query/v1`) && Headers(`x-ring`, `production`)
   selector:
-  # Target deployment instances
-    # name of microservice
-    name: query
-    # Major version of microservice
-    version: v1
-    # Branch name
-    ring: production
+    ring: app.kubernetes.io/name: hello-ring-master
