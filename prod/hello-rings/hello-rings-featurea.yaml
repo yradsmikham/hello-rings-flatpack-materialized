@@ -23,15 +23,15 @@ spec:
 
 ---
 # Source: hello-ring/templates/ring.yaml
-apiVersion: ring.microsoft.com/v1alpha1
+apiVersion: rings.microsoft.com/v1alpha1
 kind: Ring
 metadata:
-  name: featureA
+  name: featurea
 spec:
   # Deploy to environment
   deploy: true
   # Custom Claims
-  claim: featureA
+  claim: featurea
   entryPoints:
     # Source of traffic (eg: 80 or 443)
     - web
