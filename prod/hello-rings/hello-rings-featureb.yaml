@@ -5,16 +5,16 @@ kind: Deployment
 metadata:
   name: hello-rings-featureb
   labels:
-    app.kubernetes.io/name: hello-ring-featureb
+    app.kubernetes.io/name: hello-rings-featureb
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: hello-ring-featureb
+      app.kubernetes.io/name: hello-rings-featureb
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: hello-ring-featureb
+        app.kubernetes.io/name: hello-rings-featureb
     spec:
       containers:
         - name: hello-ring
@@ -38,4 +38,4 @@ spec:
     - web-secured
   match: PathPrefix(`/query/v1`) && Headers(`x-ring`, `featureB`)
   selector:
-    app.kubernetes.io/name: hello-ring-featureb
+    app.kubernetes.io/name: hello-rings-featureb
