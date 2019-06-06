@@ -38,10 +38,4 @@ spec:
     - web-secured
   match: PathPrefix(`/query/v1`) && Headers(`x-ring`, `production`)
   selector:
-  # Target deployment instances
-    # name of microservice
-    name: query
-    # Major version of microservice
-    version: v1
-    # Branch name
-    ring: production
+    ring: app.kubernetes.io/name: hello-ring
