@@ -1,5 +1,5 @@
 ---
-# Source: hello-ring/templates/deployment.yaml
+# Source: hello-rings-master/templates/deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -17,11 +17,12 @@ spec:
         app.kubernetes.io/name: hello-rings-master
     spec:
       containers:
-        - name: hello-ring
-          image: "hellorings.azurecr.io/hellorings:hello-rings-master-3814"
+        - name: hello-rings-master
+          image: "hellorings.azurecr.io/hellorings:hello-rings-master-3888"
           imagePullPolicy: IfNotPresent
 
 ---
+# Source: hello-rings-master/templates/ring.yaml
 # Source: hello-ring/templates/ring.yaml
 apiVersion: rings.microsoft.com/v1alpha1
 kind: Ring
@@ -40,3 +41,4 @@ spec:
   match: PathPrefix(`/query/v1`) && Headers(`x-ring`, `production`)
   selector:
     app.kubernetes.io/name: hello-rings-master
+

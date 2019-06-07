@@ -1,5 +1,5 @@
 ---
-# Source: hello-ring/templates/deployment.yaml
+# Source: hello-rings-featurea/templates/deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -17,12 +17,12 @@ spec:
         app.kubernetes.io/name: hello-rings-featurea
     spec:
       containers:
-        - name: hello-ring
+        - name: hello-rings-featurea
           image: "hellorings.azurecr.io/hellorings:hello-rings-featurea-3866"
           imagePullPolicy: IfNotPresent
 
 ---
-# Source: hello-ring/templates/ring.yaml
+# Source: hello-rings-featurea/templates/ring.yaml
 apiVersion: rings.microsoft.com/v1alpha1
 kind: Ring
 metadata:
@@ -40,3 +40,4 @@ spec:
   match: PathPrefix(`/query/v1`) && Headers(`x-ring`, `featurea`)
   selector:
     app.kubernetes.io/name: hello-rings-featurea
+
