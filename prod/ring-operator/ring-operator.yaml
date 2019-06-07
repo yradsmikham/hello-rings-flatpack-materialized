@@ -1,0 +1,568 @@
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: ingressroutes.traefik.containo.us
+
+spec:
+  group: traefik.containo.us
+  version: v1alpha1
+  names:
+    kind: IngressRoute
+    plural: ingressroutes
+    singular: ingressroute
+  scope: Namespaced
+
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: middlewares.traefik.containo.us
+
+spec:
+  group: traefik.containo.us
+  version: v1alpha1
+  names:
+    kind: Middleware
+    plural: middlewares
+    singular: middleware
+  scope: Namespaced
+
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: traefik-ingress-controller
+
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - services
+      - endpoints
+      - secrets
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - extensions
+    resources:
+      - ingresses
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - extensions
+    resources:
+      - ingresses/status
+    verbs:
+      - update
+  - apiGroups:
+      - traefik.containo.us
+    resources:
+      - middlewares
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - traefik.containo.us
+    resources:
+      - ingressroutes
+    verbs:
+      - get
+      - list
+      - watch
+
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: traefik-ingress-controller
+
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: traefik-ingress-controller
+subjects:
+  - kind: ServiceAccount
+    name: traefik-ingress-controller
+    namespace: default
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  namespace: default
+  name: traefik-ingress-controller
+---
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  namespace: default
+  name: traefik
+  labels:
+    app: traefik
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: traefik
+  template:
+    metadata:
+      labels:
+        app: traefik
+    spec:
+      serviceAccountName: traefik-ingress-controller
+      containers:
+        - name: traefik
+          image: traefik:v2.0
+          args:
+            - --api
+            - --accesslog
+            - --entrypoints=Name:http Address::8000
+            - --entrypoints=Name:https Address::4443
+            - --entrypoints=Name:internal Address::8010
+            - --providers.kubernetescrd
+            # - --providers.kubernetescrd.trace
+          ports:
+            - name: http
+              containerPort: 8000
+            - name: https
+              containerPort: 4443
+            - name: internal
+              containerPort: 8010
+            - name: admin
+              containerPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ring-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: ring-operator
+  template:
+    metadata:
+      labels:
+        name: ring-operator
+    spec:
+      serviceAccountName: ring-operator
+      containers:
+        - name: ring-operator
+          # Replace this with the built image name
+          image: migolfi.azurecr.io/ring-operator:v0.0.2-v1alpha1
+          command:
+          - ring-operator
+          imagePullPolicy: Always
+          env:
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPERATOR_NAME
+              value: "ring-operator"
+      imagePullSecrets:
+        - name: azurecr
+
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: query-private
+spec:
+  selector:
+    matchLabels:
+      name: query
+      version: v1
+      ring: private
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: query
+        version: v1
+        ring: private
+    spec:
+      containers:
+      - name: query
+        image: migolfi.azurecr.io/ringleader
+        ports:
+        - containerPort: 8080
+        env:
+          - name: RING
+            value: private
+      imagePullSecrets:
+        - name: azurecr
+---
+apiVersion: rings.microsoft.com/v1alpha1
+kind: Ring
+metadata:
+  name: query-v1-private
+spec:
+  # Deploy to environment
+  deploy: true
+  # Custom Claims
+  claim: private
+  entryPoints:
+    # Source of traffic (eg: 80 or 443)
+    - http
+    - https
+    - internal
+  match: PathPrefix(`/query/v1`) && Headers(`x-ring`, `private`)
+  selector:
+  # Target deployment instances
+    # name of microservice
+    name: query
+    # Major version of microservice
+    version: v1
+    # Branch name
+    ring: private
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: query-public
+spec:
+  selector:
+    matchLabels:
+      name: query
+      version: v1
+      ring: public
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: query
+        version: v1
+        ring: public
+    spec:
+      containers:
+      - name: query
+        image: migolfi.azurecr.io/ringleader
+        ports:
+        - containerPort: 8080
+        env:
+          - name: RING
+            value: public
+      imagePullSecrets:
+        - name: azurecr
+---
+apiVersion: rings.microsoft.com/v1alpha1
+kind: Ring
+metadata:
+  name: query-v1-public
+spec:
+  # Deploy to environment
+  deploy: true
+  # Custom Claims
+  claim: public
+  entryPoints:
+    # Source of traffic (eg: 80 or 443)
+    - http
+    - https
+    - internal
+  match: PathPrefix(`/query/v1`) # && Headers(`x-ring`, `public`)
+  selector:
+  # Target deployment instances
+    # name of microservice
+    name: query
+    # Major version of microservice
+    version: v1
+    # Branch name
+    ring: public
+---
+# apiVersion: rings.microsoft.com/v1alpha1
+# kind: Ring
+# metadata:
+#   name: master
+# spec:
+#   # Deploy to environment
+#   deploy: true
+#   # Custom Claims
+#   claim: production
+#   entryPoints:
+#     # Source of traffic (eg: 80 or 443)
+#     - web
+#     - web-secured
+#   match: PathPrefix(`/query/v1`) && Headers(`x-ring`, `public`)
+#   selector:
+#   # Target deployment instances
+#     # name of microservice
+#     name: ring-leader
+#     # Major version of microservice
+#     version: v1
+#     # Branch name
+#     ring: public
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: rings.rings.microsoft.com
+spec:
+  group: rings.microsoft.com
+  names:
+    kind: Ring
+    listKind: RingList
+    plural: rings
+    singular: ring
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          type: object
+          required:
+            - deploy
+            - claim
+            - entryPoints
+            - match
+            - selector
+          properties:
+            deploy:
+              type: boolean
+              description: 'Deploy will inform the CI/CD system whether or not to deploy the codebase to a live environment'
+            claim:
+              type: string
+              description: 'Claim will be used to route user traffic to different instances of deployments'
+            entryPoints:
+              type: array
+              description: 'Entrypoints inform which types of traffic will be received (eg: http, https, internal)'
+              items:
+                type: string
+            match:
+              type: string
+              description: 'Match is the routing rule to be used for this route (eg: PathPrefix(`/query/v1`)'
+            selector:
+              type: object
+              description: 'Selector is used for targetting a certain deployment'
+        status:
+          type: object
+  version: v1alpha1
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  creationTimestamp: null
+  name: ring-operator
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - services
+  - endpoints
+  - persistentvolumeclaims
+  - events
+  - configmaps
+  - secrets
+  verbs:
+  - '*'
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  - daemonsets
+  - replicasets
+  - statefulsets
+  verbs:
+  - '*'
+- apiGroups:
+  - monitoring.coreos.com
+  resources:
+  - servicemonitors
+  verbs:
+  - get
+  - create
+- apiGroups:
+  - apps
+  resourceNames:
+  - ring-operator
+  resources:
+  - deployments/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - rings.microsoft.com
+  resources:
+  - '*'
+  verbs:
+  - '*'
+- apiGroups:
+  - traefik.containo.us
+  resources:
+  - 'ingressroutes'
+  verbs:
+  - '*'
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: ring-operator
+subjects:
+- kind: ServiceAccount
+  name: ring-operator
+roleRef:
+  kind: Role
+  name: ring-operator
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: traefik
+spec:
+  ports:
+    - protocol: TCP
+      name: http
+      port: 8000
+    - protocol: TCP
+      name: https
+      port: 4443
+    - protocol: TCP
+      name: internal
+      port: 8010
+    - protocol: TCP
+      name: admin
+      port: 8080
+  selector:
+    app: traefik
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ring-operator
+
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: storage-preview
+spec:
+  selector:
+    matchLabels:
+      name: storage
+      version: v1
+      ring: preview
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: storage
+        version: v1
+        ring: preview
+    spec:
+      containers:
+      - name: storage
+        image: migolfi.azurecr.io/ringfollower
+        ports:
+        - containerPort: 8080
+        env:
+          - name: RING
+            value: preview
+      imagePullSecrets:
+        - name: azurecr
+---
+apiVersion: rings.microsoft.com/v1alpha1
+kind: Ring
+metadata:
+  name: storage-v1-preview
+spec:
+  # Deploy to environment
+  deploy: true
+  # Custom Claims
+  claim: preview
+  entryPoints:
+    # Source of traffic (eg: 80 or 443)
+    - http
+    - https
+    - internal
+  match: PathPrefix(`/storage/v1`) && Headers(`x-ring`, `preview`)
+  selector:
+  # Target deployment instances
+    # name of microservice
+    name: storage
+    # Major version of microservice
+    version: v1
+    # Branch name
+    ring: preview
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: storage-public
+spec:
+  selector:
+    matchLabels:
+      name: storage
+      version: v1
+      ring: public
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: storage
+        version: v1
+        ring: public
+    spec:
+      containers:
+      - name: storage
+        image: migolfi.azurecr.io/ringfollower
+        ports:
+        - containerPort: 8080
+        env:
+          - name: RING
+            value: public
+      imagePullSecrets:
+        - name: azurecr
+---
+apiVersion: rings.microsoft.com/v1alpha1
+kind: Ring
+metadata:
+  name: storage-v1-public
+spec:
+  # Deploy to environment
+  deploy: true
+  # Custom Claims
+  claim: public
+  entryPoints:
+    # Source of traffic (eg: 80 or 443)
+    - http
+    - https
+    - internal
+  match: PathPrefix(`/storage/v1`) # && Headers(`x-ring`, `public`)
+  selector:
+  # Target deployment instances
+    # name of microservice
+    name: storage
+    # Major version of microservice
+    version: v1
+    # Branch name
+    ring: public
