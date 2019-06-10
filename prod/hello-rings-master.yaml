@@ -18,8 +18,10 @@ spec:
     spec:
       containers:
         - name: hello-rings-master
-          image: "hellorings.azurecr.io/hellorings:hello-rings-master-3911"
+          image: "hellorings.azurecr.io/hellorings:hello-rings-master-3914"
           imagePullPolicy: IfNotPresent
+          ports: 
+            - containerPort: 8080
 
 ---
 # Source: hello-rings-master/templates/ring.yaml
