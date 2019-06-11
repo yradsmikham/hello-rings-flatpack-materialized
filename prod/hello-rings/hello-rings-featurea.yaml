@@ -39,7 +39,7 @@ spec:
     - http
     - https
     - internal
-  match: PathPrefix(`/query/v1`) && Headers(`x-ring`, `featurea`)
+  match: PathPrefix(`/`) && Headers(`x-ring`, `featurea`)
   selector:
     app.kubernetes.io/name: hello-rings-featurea
 
