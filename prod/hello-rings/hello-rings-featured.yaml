@@ -1,0 +1,50 @@
+---
+# Source: hello-rings-master/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-rings-featured-hello-rings-master
+  labels:
+    app.kubernetes.io/name: hello-rings-master
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: hello-rings-featured
+
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: hello-rings-featured
+
+    spec:
+      containers:
+        - name: hello-rings-master
+          image: "hellorings.azurecr.io/hellorings:hello-rings-featured-4062"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+
+
+---
+# Source: hello-rings-master/templates/ring.yaml
+# Source: hello-ring/templates/ring.yaml
+apiVersion: rings.microsoft.com/v1alpha1
+kind: Ring
+metadata:
+  name: featured
+spec:
+  # Deploy to environment
+  deploy: true
+  # Custom Claims
+  claim: featured
+  entryPoints:
+    # Source of traffic (eg: 80 or 443)
+    - http
+    - https
+    - internal
+  match: PathPrefix(`/`) && Headers(`x-ring`, `featured`)
+  selector:
+    app.kubernetes.io/name: hello-rings-featured
+
+
