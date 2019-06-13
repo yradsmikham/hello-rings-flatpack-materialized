@@ -6,6 +6,8 @@ metadata:
   name: hello-rings-featurea
   labels:
     app.kubernetes.io/name: hello-rings-featurea
+    ring: featurea
+    claim: featurea
 spec:
   replicas: 1
   selector:
@@ -20,7 +22,7 @@ spec:
     spec:
       containers:
         - name: hello-rings-featurea
-          image: "hellorings.azurecr.io/hellorings:hello-rings-featurea-4020"
+          image: "hellorings.azurecr.io/hellorings:hello-rings-featurea-4066"
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080

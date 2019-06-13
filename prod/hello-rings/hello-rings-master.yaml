@@ -6,6 +6,8 @@ metadata:
   name: hello-rings-master
   labels:
     app.kubernetes.io/name: hello-rings-master
+    ring: production
+    claim: production
 spec:
   replicas: 1
   selector:
@@ -20,7 +22,7 @@ spec:
     spec:
       containers:
         - name: hello-rings-master
-          image: "hellorings.azurecr.io/hellorings:hello-rings-master-4019"
+          image: "hellorings.azurecr.io/hellorings:hello-rings-master-4065"
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080

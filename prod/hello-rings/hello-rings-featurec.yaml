@@ -6,6 +6,8 @@ metadata:
   name: hello-rings-featurec
   labels:
     app.kubernetes.io/name: hello-rings-featurec
+    ring: featurec
+    claim: featurec
 spec:
   replicas: 1
   selector:

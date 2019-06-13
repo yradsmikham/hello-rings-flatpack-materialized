@@ -3,9 +3,11 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: hello-rings-featured-hello-rings-master
+  name: hello-rings-featured
   labels:
-    app.kubernetes.io/name: hello-rings-master
+    app.kubernetes.io/name: hello-rings-featured
+    ring: featured
+    claim: featured
 spec:
   replicas: 1
   selector:
