@@ -3,28 +3,28 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: hello-rings-v1-master
+  name: hello-rings-v1-featuref
   labels:
     name: hello-rings
     version: v1
-    ring: master
+    ring: featuref
 spec:
   replicas: 1
   selector:
     matchLabels:
       name: hello-rings
       version: v1
-      ring: master
+      ring: featuref
   template:
     metadata:
       labels:
         name: hello-rings
         version: v1
-        ring: master
+        ring: featuref
     spec:
       containers:
         - name: hello-rings-master
-          image: "hellorings.azurecr.io/hellorings:hello-rings-master-4153"
+          image: "hellorings.azurecr.io/hellorings:hello-rings-featuref-4093"
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
@@ -36,7 +36,7 @@ spec:
 apiVersion: rings.microsoft.com/v1alpha1
 kind: Ring
 metadata:
-  name: hello-rings-v1-master
+  name: hello-rings-v1-featuref
   author: Mike Developer # Set by pipeline
   branchName: my-branch # Set by pipeline
   buildId: 12345 # Set by pipeline
@@ -45,15 +45,15 @@ metadata:
 spec:
   # Deploy to environment
   deploy: true
-  claim: master
+  claim: featuref
   entryPoints:
     # Source of traffic (eg: 80 or 443)
     - http
     - https
     - internal
-  match: PathPrefix(`/hello-rings/v1`) && Headers(`x-ring`, `master`)
+  match: PathPrefix(`/hello-rings/v1`) && Headers(`x-ring`, `featuref`)
   selector:
     name: hello-rings
     version: v1
-    ring: master
+    ring: featuref
 

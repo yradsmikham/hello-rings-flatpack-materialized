@@ -3,26 +3,28 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: hello-rings-featurea
+  name: hello-rings-v1-featurea
   labels:
-    app.kubernetes.io/name: hello-rings-featurea
+    name: hello-rings
+    version: v1
     ring: featurea
-    claim: featurea
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: hello-rings-featurea
-
+      name: hello-rings
+      version: v1
+      ring: featurea
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: hello-rings-featurea
-
+        name: hello-rings
+        version: v1
+        ring: featurea
     spec:
       containers:
         - name: hello-rings-featurea
-          image: "hellorings.azurecr.io/hellorings:hello-rings-featurea-4066"
+          image: "hellorings.azurecr.io/hellorings:hello-rings-featurea-4156"
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
@@ -33,19 +35,24 @@ spec:
 apiVersion: rings.microsoft.com/v1alpha1
 kind: Ring
 metadata:
-  name: featurea
+  name: hello-rings-v1-featurea
+  author: Mike Developer # Set by pipeline
+  branchName: my-branch # Set by pipeline
+  buildId: 12345 # Set by pipeline
+  buildDate: 20190601 # Set by pipeline
+  commitId: abc123 # Set by pipeline
 spec:
   # Deploy to environment
   deploy: true
-  # Custom Claims
   claim: featurea
   entryPoints:
     # Source of traffic (eg: 80 or 443)
     - http
     - https
     - internal
-  match: PathPrefix(`/`) && Headers(`x-ring`, `featurea`)
+  match: PathPrefix(`/hello-rings/v1`) && Headers(`x-ring`, `featurea`)
   selector:
-    app.kubernetes.io/name: hello-rings-featurea
-
+    name: hello-rings
+    version: v1
+    ring: featurea
 
